@@ -42,9 +42,11 @@ Lần đầu bấm **Cập nhật dữ liệu mới nhất**. Tải ~50MB, tính
 
 File `prices.parquet` ~270MB, **không** đưa lên GitHub (giới hạn 100MB). Cloud chạy pipeline khi bấm cập nhật. Trên Cloud chỉ giữ **5 năm** gần nhất để vừa RAM ~1GB.
 
-1. Repo GitHub public, file `app.py`, Python 3.12.  
-2. [share.streamlit.io](https://share.streamlit.io) → **Create app**.  
-3. Deploy. App mở trống → bấm **Cập nhật dữ liệu mới nhất**.
+Repo: [luunhathuy20022006-cyber/vn-stock-analytics](https://github.com/luunhathuy20022006-cyber/vn-stock-analytics)
+
+Deploy sẵn: [share.streamlit.io/deploy](https://share.streamlit.io/deploy?repository=luunhathuy20022006-cyber/vn-stock-analytics&branch=main&mainModule=app.py&subdomain=vn-stock-analytics) (repo `main`, file `app.py`, Python 3.12).
+
+App mở trống → bấm **Cập nhật dữ liệu mới nhất**.
 
 Hoặc chạy server riêng:
 
