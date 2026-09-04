@@ -3,7 +3,7 @@ VN Stock Analytics — đề Duan_1
 Một file nộp: pipeline CafeF + chỉ báo + tín hiệu + dashboard Streamlit.
 
 Chạy:
-    pip install streamlit pandas numpy plotly pyarrow requests
+    pip install streamlit pandas numpy plotly requests
     streamlit run Duan_1.py
 
 Nguồn: CafeF — Đã điều chỉnh / Số liệu giao dịch / Upto 3 sàn (HOSE, HNX, UPCOM).
@@ -22,19 +22,25 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Callable
 
-import numpy as np
-import pandas as pd
-import plotly.graph_objects as go
-import requests
 import streamlit as st
-from plotly.subplots import make_subplots
 
 st.set_page_config(
     page_title="VN Stock Analytics",
-    page_icon="VN",
+    page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+try:
+    import numpy as np
+    import pandas as pd
+    import plotly.graph_objects as go
+    import requests
+    from plotly.subplots import make_subplots
+except Exception as exc:
+    st.error("Thiếu thư viện. Vào Manage app → Settings chọn Python 3.12, rồi Reboot.")
+    st.exception(exc)
+    st.stop()
 
 # =============================================================================
 # Cấu hình
@@ -51,6 +57,8 @@ EXTRACT_DIR = DATA_DIR / "extracted"
 PROCESSED_DIR = DATA_DIR / "processed"
 PRICES_PATH = PROCESSED_DIR / "prices.parquet"
 SIGNALS_PATH = PROCESSED_DIR / "signals.parquet"
+PRICES_CSV = PROCESSED_DIR / "prices.csv.gz"
+SIGNALS_CSV = PROCESSED_DIR / "signals.csv.gz"
 META_PATH = PROCESSED_DIR / "meta.json"
 
 EXCHANGE_MAP = {"HSX": "HOSE", "HOSE": "HOSE", "HNX": "HNX", "UPCOM": "UPCOM"}
@@ -763,16 +771,38 @@ def _json_default(value):
     return str(value)
 
 
-def save_prices(df: pd.DataFrame) -> Path:
+def _save_table(df: pd.DataFrame, parquet_path: Path, csv_path: Path) -> Path:
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
-    df.to_parquet(PRICES_PATH, index=False)
-    return PRICES_PATH
+    try:
+        df.to_parquet(parquet_path, index=False)
+        return parquet_path
+    except Exception:
+        df.to_csv(csv_path, index=False, compression="gzip")
+        return csv_path
+
+
+def _load_table(parquet_path: Path, csv_path: Path, date_col: str) -> pd.DataFrame:
+    df = pd.DataFrame()
+    if parquet_path.exists():
+        try:
+            df = pd.read_parquet(parquet_path)
+        except Exception:
+            df = pd.DataFrame()
+    if df.empty and csv_path.exists():
+        df = pd.read_csv(csv_path, compression="gzip")
+    if df.empty:
+        return df
+    if date_col in df.columns:
+        df[date_col] = pd.to_datetime(df[date_col])
+    return df
+
+
+def save_prices(df: pd.DataFrame) -> Path:
+    return _save_table(df, PRICES_PATH, PRICES_CSV)
 
 
 def save_signals(df: pd.DataFrame) -> Path:
-    PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
-    df.to_parquet(SIGNALS_PATH, index=False)
-    return SIGNALS_PATH
+    return _save_table(df, SIGNALS_PATH, SIGNALS_CSV)
 
 
 def save_meta(dataset: CafeFDataset, stats: dict, extra: dict | None = None) -> Path:
@@ -803,21 +833,11 @@ def load_meta() -> dict | None:
 
 
 def load_prices() -> pd.DataFrame:
-    if not PRICES_PATH.exists():
-        return pd.DataFrame()
-    df = pd.read_parquet(PRICES_PATH)
-    if "date" in df.columns:
-        df["date"] = pd.to_datetime(df["date"])
-    return df
+    return _load_table(PRICES_PATH, PRICES_CSV, "date")
 
 
 def load_signals() -> pd.DataFrame:
-    if not SIGNALS_PATH.exists():
-        return pd.DataFrame()
-    df = pd.read_parquet(SIGNALS_PATH)
-    if "signal_date" in df.columns:
-        df["signal_date"] = pd.to_datetime(df["signal_date"])
-    return df
+    return _load_table(SIGNALS_PATH, SIGNALS_CSV, "signal_date")
 
 
 def extract_dir_from_meta(meta: dict | None) -> Path | None:
@@ -921,7 +941,7 @@ def run_pipeline(force: bool = False, progress: ProgressCb | None = None) -> dic
         not force and meta
         and meta.get("dataset_date") == dataset.dataset_date
         and meta.get("preprocess_version") == PREPROCESS_VERSION
-        and PRICES_PATH.exists()
+        and (PRICES_PATH.exists() or PRICES_CSV.exists())
     )
     if already_current:
         prices = load_prices()
@@ -1722,9 +1742,10 @@ def _rerun() -> None:
 
 
 def _parquet_signature() -> tuple[int, int]:
-    if not PRICES_PATH.exists():
+    path = PRICES_PATH if PRICES_PATH.exists() else PRICES_CSV
+    if not path.exists():
         return (0, 0)
-    stat = PRICES_PATH.stat()
+    stat = path.stat()
     return (int(stat.st_mtime_ns), int(stat.st_size))
 
 

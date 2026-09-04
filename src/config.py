@@ -17,6 +17,8 @@ PROCESSED_DIR = DATA_DIR / "processed"
 
 PRICES_PATH = PROCESSED_DIR / "prices.parquet"
 SIGNALS_PATH = PROCESSED_DIR / "signals.parquet"
+PRICES_CSV = PROCESSED_DIR / "prices.csv.gz"
+SIGNALS_CSV = PROCESSED_DIR / "signals.csv.gz"
 META_PATH = PROCESSED_DIR / "meta.json"
 
 EXCHANGE_MAP = {

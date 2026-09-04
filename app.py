@@ -12,7 +12,7 @@ import streamlit as st
 
 st.set_page_config(
     page_title="VN Stock Analytics",
-    page_icon="VN",
+    page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -22,7 +22,7 @@ try:
 
     from src.analysis.indicators import add_indicators
     from src.analysis.signals import DEFAULT_STRATEGY, apply_strategy, generate_signals
-    from src.config import PRICES_PATH
+    from src.config import PRICES_CSV, PRICES_PATH
     from src.pipeline.run import run_pipeline
     from src.pipeline.store import load_meta, load_prices
     from src.viz.charts import DEFAULT_INDICATORS, INDICATOR_KEYS, PLOTLY_CONFIG, price_chart
@@ -69,9 +69,10 @@ _OHLC_COLUMNS = [
 
 
 def _parquet_signature() -> tuple[int, int]:
-    if not PRICES_PATH.exists():
+    path = PRICES_PATH if PRICES_PATH.exists() else PRICES_CSV
+    if not path.exists():
         return (0, 0)
-    stat = PRICES_PATH.stat()
+    stat = path.stat()
     return (int(stat.st_mtime_ns), int(stat.st_size))
 
 

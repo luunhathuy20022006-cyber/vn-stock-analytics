@@ -8,7 +8,7 @@ import pandas as pd
 
 from src.analysis.indicators import add_indicators
 from src.analysis.signals import DEFAULT_STRATEGY, generate_signals
-from src.config import PRICES_PATH, PREPROCESS_VERSION, history_years, is_streamlit_cloud
+from src.config import PRICES_CSV, PRICES_PATH, PREPROCESS_VERSION, history_years, is_streamlit_cloud
 from src.pipeline.cafef import discover_latest_adjusted_upto, download_dataset
 from src.pipeline.clean import load_and_clean
 from src.pipeline.extract import extract_zip
@@ -41,7 +41,7 @@ def run_pipeline(
         and meta
         and meta.get("dataset_date") == dataset.dataset_date
         and meta.get("preprocess_version") == PREPROCESS_VERSION
-        and PRICES_PATH.exists()
+        and (PRICES_PATH.exists() or PRICES_CSV.exists())
     )
     if already_current:
         prices = load_prices()

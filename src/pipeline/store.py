@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timezone
+from pathlib import Path
 
 import pandas as pd
 
-from src.config import META_PATH, PRICES_PATH, PROCESSED_DIR, SIGNALS_PATH
+from src.config import META_PATH, PRICES_CSV, PRICES_PATH, PROCESSED_DIR, SIGNALS_CSV, SIGNALS_PATH
 from src.pipeline.cafef import CafeFDataset
 
 
@@ -17,16 +18,38 @@ def _json_default(value):
     return str(value)
 
 
-def save_prices(df: pd.DataFrame) -> Path:
+def _save_table(df: pd.DataFrame, parquet_path: Path, csv_path: Path) -> Path:
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
-    df.to_parquet(PRICES_PATH, index=False)
-    return PRICES_PATH
+    try:
+        df.to_parquet(parquet_path, index=False)
+        return parquet_path
+    except Exception:
+        df.to_csv(csv_path, index=False, compression="gzip")
+        return csv_path
+
+
+def _load_table(parquet_path: Path, csv_path: Path, date_col: str) -> pd.DataFrame:
+    df = pd.DataFrame()
+    if parquet_path.exists():
+        try:
+            df = pd.read_parquet(parquet_path)
+        except Exception:
+            df = pd.DataFrame()
+    if df.empty and csv_path.exists():
+        df = pd.read_csv(csv_path, compression="gzip")
+    if df.empty:
+        return df
+    if date_col in df.columns:
+        df[date_col] = pd.to_datetime(df[date_col])
+    return df
+
+
+def save_prices(df: pd.DataFrame) -> Path:
+    return _save_table(df, PRICES_PATH, PRICES_CSV)
 
 
 def save_signals(df: pd.DataFrame) -> Path:
-    PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
-    df.to_parquet(SIGNALS_PATH, index=False)
-    return SIGNALS_PATH
+    return _save_table(df, SIGNALS_PATH, SIGNALS_CSV)
 
 
 def save_meta(dataset: CafeFDataset, stats: dict, extra: dict | None = None) -> Path:
@@ -55,18 +78,8 @@ def load_meta() -> dict | None:
 
 
 def load_prices() -> pd.DataFrame:
-    if not PRICES_PATH.exists():
-        return pd.DataFrame()
-    df = pd.read_parquet(PRICES_PATH)
-    if "date" in df.columns:
-        df["date"] = pd.to_datetime(df["date"])
-    return df
+    return _load_table(PRICES_PATH, PRICES_CSV, "date")
 
 
 def load_signals() -> pd.DataFrame:
-    if not SIGNALS_PATH.exists():
-        return pd.DataFrame()
-    df = pd.read_parquet(SIGNALS_PATH)
-    if "signal_date" in df.columns:
-        df["signal_date"] = pd.to_datetime(df["signal_date"])
-    return df
+    return _load_table(SIGNALS_PATH, SIGNALS_CSV, "signal_date")
