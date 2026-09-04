@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import gc
+
 import numpy as np
 import pandas as pd
 
@@ -61,8 +63,20 @@ def add_indicators(df: pd.DataFrame) -> pd.DataFrame:
     if df.empty:
         return df
     ordered = df.sort_values(["ticker", "date"])
-    parts = [_ta_one(group) for _, group in ordered.groupby("ticker", sort=False, observed=True)]
-    return pd.concat(parts, ignore_index=True)
+    chunks: list[pd.DataFrame] = []
+    buf: list[pd.DataFrame] = []
+    for i, (_, group) in enumerate(ordered.groupby("ticker", sort=False, observed=True), start=1):
+        buf.append(_ta_one(group))
+        if i % 200 == 0:
+            chunks.append(pd.concat(buf, ignore_index=True))
+            buf.clear()
+            gc.collect()
+    if buf:
+        chunks.append(pd.concat(buf, ignore_index=True))
+    out = pd.concat(chunks, ignore_index=True) if chunks else df
+    del chunks, buf, ordered
+    gc.collect()
+    return out
 
 
 def add_chart_ta(df: pd.DataFrame) -> pd.DataFrame:

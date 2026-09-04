@@ -39,7 +39,7 @@ LIMIT_TICK_TOLERANCE = 0.001
 PREPROCESS_VERSION = "floor-ceiling-v1"
 
 # Streamlit Community Cloud ~1GB RAM: giữ vài năm gần nhất là đủ SMA50/CMF/TL.
-CLOUD_HISTORY_YEARS = 5
+CLOUD_HISTORY_YEARS = 3
 
 
 def is_streamlit_cloud() -> bool:

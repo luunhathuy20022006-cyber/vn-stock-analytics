@@ -8,25 +8,7 @@ ROOT = Path(__file__).resolve().parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-import pandas as pd
 import streamlit as st
-
-from src.analysis.indicators import add_indicators
-from src.analysis.signals import DEFAULT_STRATEGY, apply_strategy, generate_signals
-from src.config import PRICES_PATH
-from src.pipeline.run import run_pipeline
-from src.pipeline.store import load_meta, load_prices
-from src.viz.charts import DEFAULT_INDICATORS, INDICATOR_KEYS, PLOTLY_CONFIG, price_chart
-from src.viz.data_view import cached_raw_preview, data_quality_tab
-from src.viz.ui import (
-    brand_html,
-    factor_row_html,
-    hero_html,
-    inject_theme,
-    kpi_row_html,
-    rank_strip_html,
-    signal_banner_html,
-)
 
 st.set_page_config(
     page_title="VN Stock Analytics",
@@ -34,6 +16,31 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+try:
+    import pandas as pd
+
+    from src.analysis.indicators import add_indicators
+    from src.analysis.signals import DEFAULT_STRATEGY, apply_strategy, generate_signals
+    from src.config import PRICES_PATH
+    from src.pipeline.run import run_pipeline
+    from src.pipeline.store import load_meta, load_prices
+    from src.viz.charts import DEFAULT_INDICATORS, INDICATOR_KEYS, PLOTLY_CONFIG, price_chart
+    from src.viz.data_view import cached_raw_preview, data_quality_tab
+    from src.viz.ui import (
+        brand_html,
+        factor_row_html,
+        hero_html,
+        inject_theme,
+        kpi_row_html,
+        rank_strip_html,
+        signal_banner_html,
+    )
+except Exception as exc:
+    st.error("Không khởi động được app. Kiểm tra log bên dưới.")
+    st.exception(exc)
+    st.stop()
+
 inject_theme()
 
 
@@ -449,4 +456,8 @@ def main() -> None:
         data_quality_tab(prices, meta)
 
 
-main()
+try:
+    main()
+except Exception as exc:
+    st.error("App gặp lỗi khi chạy.")
+    st.exception(exc)

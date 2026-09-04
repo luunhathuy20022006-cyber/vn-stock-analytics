@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import gc
 import shutil
 from typing import Callable
 
@@ -96,7 +97,13 @@ def run_pipeline(
         emit(f"Cloud: giữ {years} năm gần nhất ({len(prices):,} dòng)...", 0.66)
 
     if is_streamlit_cloud():
+        num_cols = [
+            c for c in ("open", "high", "low", "close", "volume", "prev_close", "floor", "ceiling", "limit_pct")
+            if c in prices.columns
+        ]
+        prices[num_cols] = prices[num_cols].apply(pd.to_numeric, errors="coerce").astype("float32")
         shutil.rmtree(extract_dir, ignore_errors=True)
+        gc.collect()
 
     emit("Đang tính chỉ báo kỹ thuật...", 0.72)
     priced = add_indicators(prices)

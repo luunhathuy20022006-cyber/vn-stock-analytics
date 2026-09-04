@@ -44,7 +44,7 @@ File `prices.parquet` ~270MB, **không** đưa lên GitHub (giới hạn 100MB).
 
 Repo: [luunhathuy20022006-cyber/vn-stock-analytics](https://github.com/luunhathuy20022006-cyber/vn-stock-analytics)
 
-Deploy sẵn: [share.streamlit.io/deploy](https://share.streamlit.io/deploy?repository=luunhathuy20022006-cyber/vn-stock-analytics&branch=main&mainModule=app.py&subdomain=vn-stock-analytics) (repo `main`, file `app.py`, Python 3.12).
+Deploy sẵn: [share.streamlit.io/deploy](https://share.streamlit.io/deploy?repository=luunhathuy20022006-cyber/vn-stock-analytics&branch=main&mainModule=app.py&subdomain=vn-stock-analytics) (repo `main`, file `app.py` hoặc `Duan_1.py`, Python **3.12** trong Settings — Cloud bỏ qua `runtime.txt`).
 
 App mở trống → bấm **Cập nhật dữ liệu mới nhất**.
 
